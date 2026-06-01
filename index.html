@@ -48,11 +48,10 @@
         .header-banner img {
             width: 100%;
             max-width: 1200px;
-            height: auto;
-            max-height: 350px;
-            object-fit: cover;
+            height: auto; /* Tự động co giãn theo tỷ lệ gốc */
             display: block;
             margin: 0 auto;
+            /* Đã loại bỏ max-height và object-fit: cover để ảnh không bị cắt xén trên điện thoại */
         }
 
         /* Container Layout */
@@ -281,7 +280,7 @@
 
 <header class="header-banner">
     <!-- Banner chính thức mà người dùng đã tải lên (banner2.jpg) -->
-    <img src="banner2.jpg" alt="Banner Chương trình Ôn thi ABIC" id="mainBanner" style="width: 100%; max-width: 1200px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1200&h=350'; this.onerror=null;" />
+    <img src="banner2.jpg" alt="Banner Chương trình Ôn thi ABIC" id="mainBanner" onerror="this.src='https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1200&h=350'; this.onerror=null;" />
 </header>
 
 <main class="container">

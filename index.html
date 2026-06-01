@@ -48,10 +48,9 @@
         .header-banner img {
             width: 100%;
             max-width: 1200px;
-            height: auto; /* Tự động co giãn theo tỷ lệ gốc */
+            height: auto;
             display: block;
             margin: 0 auto;
-            /* Đã loại bỏ max-height và object-fit: cover để ảnh không bị cắt xén trên điện thoại */
         }
 
         /* Container Layout */
@@ -81,15 +80,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-
-        .quick-guide {
-            background: #fef2f2;
-            border: 1px dashed #fca5a5;
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 14px;
         }
 
         /* Form Elements */
@@ -226,6 +216,27 @@
         .feedback-box.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         .feedback-box b { font-weight: 900; }
 
+        /* Quiz Controls & Jump Tab */
+        .quiz-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+        .jump-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fafafa;
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
         /* Review Item */
         .review-item {
             padding: 16px;
@@ -273,28 +284,23 @@
             .card { padding: 16px; }
             .btn-group { flex-direction: column; align-items: stretch; }
             .btn-group .btn, .ml-auto { margin-left: 0; width: 100%; }
+            .quiz-controls { flex-direction: column; align-items: stretch; }
+            .quiz-controls .btn { width: 100%; }
+            .jump-box { justify-content: center; margin: 8px 0; }
         }
     </style>
 </head>
 <body>
 
 <header class="header-banner">
-    <!-- Banner chính thức mà người dùng đã tải lên (banner2.jpg) -->
+    <!-- Banner chính thức mà người dùng đã tải lên -->
     <img src="banner2.jpg" alt="Banner Chương trình Ôn thi ABIC" id="mainBanner" onerror="this.src='https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1200&h=350'; this.onerror=null;" />
 </header>
 
 <main class="container">
     
-    <!-- Cài đặt & Hành động -->
+    <!-- Các chức năng khởi tạo -->
     <div class="card">
-        <h1 class="card-title">
-            <span>📚 Cài đặt & Khởi tạo Học tập</span>
-        </h1>
-        
-        <div class="quick-guide">
-            <b>Lưu ý:</b> Hệ thống đã nhúng sẵn các câu hỏi mẫu. Để nạp trọn bộ <b>671 câu hỏi</b>, bạn chỉ cần tải file <code>dapan.xlsx</code> vào ô bên dưới <b>(chỉ cần thao tác 1 lần duy nhất)</b>, hệ thống sẽ lưu vĩnh viễn trên trình duyệt của bạn!
-        </div>
-
         <div class="grid-2">
             <div class="form-group">
                 <label>Chế độ học tập</label>
@@ -304,17 +310,17 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Nạp File 671 Câu hỏi (Excel/CSV)</label>
+                <label>Nạp File Câu hỏi (Excel/CSV)</label>
                 <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls,.csv,.htm,.html" style="padding: 9px 16px;" />
             </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 0;">
-            <label>Tra cứu nhanh (Tìm kiếm câu hỏi, đáp án)</label>
-            <input type="text" id="search" class="form-control" placeholder="Nhập từ khóa cần tìm kiếm..." autocomplete="off" />
+            <label>Tra cứu nhanh (Hỗ trợ viết tắt chữ cái đầu của câu hỏi)</label>
+            <input type="text" id="search" class="form-control" placeholder="Ví dụ: gõ 'cpad' cho câu 'Chọn phương án đúng...'" autocomplete="off" />
         </div>
         
-        <!-- Các nút hành động chính được gom gọn vào đây -->
+        <!-- Các nút hành động chính -->
         <div class="btn-group" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
             <button id="startBtn" class="btn btn-primary">▶️ Bắt đầu làm bài</button>
             <button id="shuffleBtn" class="btn btn-outline">🔀 Làm bài Ngẫu nhiên</button>
@@ -378,8 +384,7 @@ let quizQuestions = [];
 let currentIndex = 0;
 let answers = new Map();
 
-// --- HARDCODED MẪU DỮ LIỆU TỪ 671 CÂU HỎI ---
-// Đã chuyển đổi sang cấu trúc phẳng (không còn chương)
+// --- HARDCODED MẪU DỮ LIỆU ---
 const PRE_IMPORTED_DATA = [
     { number: 1, question: "Chọn phương án đúng nhất về phương pháp quản lý rủi ro:", options: ["Né tránh rủi ro.", "Chấp nhận rủi ro.", "Kiểm soát rủi ro.", "Chuyển giao rủi ro.", "A, B, C, D đúng."], answer: "A, B, C, D đúng.", explanation: "" },
     { number: 2, question: "Bảo hiểm là phương thức quản lý rủi ro nào sau đây:", options: ["Né tránh rủi ro.", "Chuyển giao rủi ro.", "Chấp nhận rủi ro.", "Kiểm soát rủi ro."], answer: "Chuyển giao rủi ro.", explanation: "" },
@@ -400,6 +405,12 @@ const els = {
     quizCard: $('quizCard'), reviewCard: $('reviewCard'), reviewList: $('reviewList'), 
     searchResults: $('searchResults'), searchList: $('searchList')
 };
+
+// Hàm loại bỏ dấu và ký tự đặc biệt hỗ trợ thuật toán viết tắt (Acronym)
+function getAcronym(str) {
+    const cleanStr = str.replace(/[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/gi, ' ');
+    return cleanStr.split(/\s+/).filter(word => word.length > 0).map(word => word[0]).join('').toLowerCase();
+}
 
 function escapeHtml(str) {
     return String(str ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));
@@ -422,7 +433,6 @@ function stripQuestionNumber(text) {
     return normalizeText(text).replace(/^\s*\d+[\).\-:]\s*/, '').trim();
 }
 
-// Thuật toán parse file thông minh tương thích 100% với dapan.xlsx
 function parseRowsToQuestions(rows) {
     const questions = [];
     let current = null;
@@ -518,9 +528,7 @@ async function parseExcelFile(file) {
     return allQs;
 }
 
-// Cập nhật trạng thái thống kê
 function updateStats() {
-    // Nếu chưa vào quiz, hiển thị tổng số câu hiện có trong thư viện
     const total = quizQuestions.length > 0 ? quizQuestions.length : ALL_QUESTIONS.length;
     const done = answers.size;
     const correct = quizQuestions.filter((q, idx) => answers.get(idx) === q.answer).length;
@@ -551,7 +559,6 @@ function startQuiz(shuffle = false) {
     els.quizCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Render UI Trắc nghiệm
 function renderQuiz() {
     if (!quizQuestions.length) return;
 
@@ -588,6 +595,9 @@ function renderQuiz() {
         `;
     }
 
+    // Tạo HTML cho Dropdown "Đi nhanh đến câu"
+    let jumpOptions = quizQuestions.map((_, i) => `<option value="${i}" ${i === currentIndex ? 'selected' : ''}>Câu ${i + 1}</option>`).join('');
+
     els.quizCard.innerHTML = `
         <div class="quiz-header">
             <span class="badge" style="background: var(--agri-red); color: white; padding: 6px 12px; border-radius: 99px; font-weight: 700;">
@@ -608,11 +618,20 @@ function renderQuiz() {
         
         ${feedbackHtml}
         
-        <div class="btn-group" style="justify-content: space-between; margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+        <div class="quiz-controls">
             <button class="btn btn-outline" onclick="prevQuestion()" ${currentIndex === 0 ? 'disabled' : ''}>← Câu trước</button>
+            
+            <!-- Tab Chọn Nhanh -->
+            <div class="jump-box">
+                <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">ĐI ĐẾN:</span>
+                <select id="jumpSelect" onchange="jumpTo(this.value)" class="form-control" style="width: auto; padding: 6px 10px; font-weight: 900; color: var(--agri-red); border: none; background: transparent; cursor: pointer;">
+                    ${jumpOptions}
+                </select>
+            </div>
+
             ${currentIndex === quizQuestions.length - 1 && els.mode.value === 'exam' 
-                ? `<button class="btn btn-success" onclick="finishExam()">✅ Nộp bài xem kết quả</button>`
-                : `<button class="btn btn-primary" onclick="nextQuestion()">${currentIndex === quizQuestions.length - 1 ? 'Hoàn thành' : 'Câu tiếp theo →'}</button>`
+                ? `<button class="btn btn-success" onclick="finishExam()">✅ Nộp bài</button>`
+                : `<button class="btn btn-primary" onclick="nextQuestion()">${currentIndex === quizQuestions.length - 1 ? 'Hoàn thành' : 'Câu tiếp →'}</button>`
             }
         </div>
     `;
@@ -631,6 +650,12 @@ function nextQuestion() {
     if (currentIndex < quizQuestions.length - 1) { 
         currentIndex++; renderQuiz(); 
     } 
+}
+
+// Xử lý sự kiện "Đi nhanh đến câu"
+function jumpTo(idx) {
+    currentIndex = parseInt(idx);
+    renderQuiz();
 }
 
 function finishExam() {
@@ -662,17 +687,22 @@ function finishExam() {
     updateStats();
 }
 
-// Tìm kiếm thông minh (Quét toàn bộ kho ALL_QUESTIONS)
+// Tìm kiếm thông minh (Bao gồm Acronym - Viết tắt chữ cái đầu)
 els.search.addEventListener('input', (e) => {
-    const kw = normalizeText(e.target.value).toLowerCase();
-    if (!kw || kw.length < 2) {
+    const kwOriginal = normalizeText(e.target.value).toLowerCase();
+    const kwNoSpace = kwOriginal.replace(/\s+/g, '');
+    
+    if (!kwOriginal) {
         els.searchResults.classList.add('hidden');
         return;
     }
     
     const results = ALL_QUESTIONS.filter(q => {
         const haystack = [q.question, ...q.options, q.answer].join(' ').toLowerCase();
-        return haystack.includes(kw);
+        const acronym = getAcronym(q.question);
+        
+        // Trả về true nếu từ khóa nằm trong câu hỏi, đáp án HOẶC viết tắt khớp với chữ cái đầu
+        return haystack.includes(kwOriginal) || (kwNoSpace.length >= 2 && acronym.includes(kwNoSpace));
     });
     
     els.searchResults.classList.remove('hidden');
@@ -688,7 +718,6 @@ els.search.addEventListener('input', (e) => {
     }
 });
 
-// Nạp File Excel (Upload dapan.xlsx)
 els.fileInput.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -708,7 +737,6 @@ els.fileInput.addEventListener('change', async (e) => {
         updateStats();
         alert(`Hoàn tất! Đã nạp thành công trọn bộ ${questions.length} câu hỏi vào hệ thống!`);
         
-        // Tự động khởi chạy luôn sau khi nạp file
         startQuiz();
     } catch (err) {
         alert('Không thể đọc file. Vui lòng kiểm tra lại định dạng!');
@@ -718,12 +746,11 @@ els.fileInput.addEventListener('change', async (e) => {
     }
 });
 
-// Khôi phục bộ dữ liệu mặc định
 els.clearDataBtn.addEventListener('click', () => {
     if (!confirm('Bạn có chắc muốn xóa dữ liệu đã tải lên và khôi phục về các câu hỏi mẫu?')) return;
     
     localStorage.removeItem('abic_questions');
-    ALL_QUESTIONS = [...PRE_IMPORTED_DATA]; // Khôi phục lại bản hardcode
+    ALL_QUESTIONS = [...PRE_IMPORTED_DATA];
     quizQuestions = [];
     answers.clear();
     
@@ -732,19 +759,17 @@ els.clearDataBtn.addEventListener('click', () => {
     updateStats();
 });
 
-// Gán Event Listener
 els.startBtn.addEventListener('click', () => startQuiz(false));
 els.shuffleBtn.addEventListener('click', () => startQuiz(true));
 els.retryBtn.addEventListener('click', () => startQuiz(false));
 els.mode.addEventListener('change', () => { if (quizQuestions.length > 0) renderQuiz(); });
 
-// Global (For HTML onclick handlers)
 window.chooseAnswer = chooseAnswer;
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.finishExam = finishExam;
+window.jumpTo = jumpTo;
 
-// Khởi tạo
 function initApp() {
     try {
         const saved = JSON.parse(localStorage.getItem('abic_questions') || '[]');

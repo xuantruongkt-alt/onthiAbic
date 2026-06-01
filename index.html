@@ -45,12 +45,14 @@
             border-bottom: 4px solid var(--agri-gold);
             text-align: center;
             overflow: hidden; /* Ngăn hình ảnh tràn viền */
+            padding: 8px 16px; /* Thêm lề để banner không sát mép màn hình điện thoại */
         }
         .header-banner img {
             width: 100%;
-            max-width: 100%; /* Cho phép banner mở rộng tối đa màn hình */
-            height: auto; /* Tự động tính toán chiều cao chuẩn theo tỷ lệ ảnh */
-            object-fit: contain; /* Đảm bảo hiển thị đầy đủ 100% nội dung ảnh, không bị cắt xén */
+            max-width: 800px; /* Thu nhỏ chiều rộng tối đa trên máy tính (nhỏ hơn, gọn hơn) */
+            max-height: 220px; /* Giới hạn chiều cao để banner không chiếm hết màn hình */
+            height: auto; /* Co giãn mượt mà theo màn hình */
+            object-fit: contain; /* Bắt buộc hiển thị đủ 100% nội dung, KHÔNG CẮT XÉN */
             display: block;
             margin: 0 auto;
         }

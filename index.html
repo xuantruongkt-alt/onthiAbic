@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Chương trình Ôn thi Bảo hiểm ABIC</title>
+    <!-- Nhúng font Roboto chuẩn của Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Thư viện đọc file Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --agri-red: #8b0d1a;
+            --agri-red-hover: #a31120;
+            --agri-red-dark: #5a060f;
+            --agri-gold: #f6c453;
+            --agri-gold-light: #fef0c7;
+            --agri-green: #15803d;
+            --agri-bg: #fff8f2;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 4px 6px rgba(139, 13, 26, 0.08);
+            --shadow-md: 0 10px 25px rgba(139, 13, 26, 0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--agri-bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 20px;
+        }
+
+        /* Banner Style */
+        .header-banner {
+            width: 100%;
+            background: var(--agri-red-dark);
+            border-bottom: 4px solid var(--agri-gold);
+            text-align: center;
+        }
+        .header-banner img {
+            width: 100%;
+            max-width: 1200px;
+            height: auto;
+            max-height: 350px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 960px;
+            margin: -30px auto 0;
+            padding: 0 16px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(139, 13, 26, 0.05);
+        }
+
+        .card-title {
+            color: var(--agri-red);
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-guide {
+            background: #fef2f2;
+            border: 1px dashed #fca5a5;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* Form Elements */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--agri-red);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(139, 13, 26, 0.1);
+        }
+
+        /* Buttons */
+        .btn-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .btn-primary { background: var(--agri-red); color: white; box-shadow: 0 4px 12px rgba(139, 13, 26, 0.2); }
+        .btn-primary:hover:not(:disabled) { background: var(--agri-red-hover); }
+        .btn-success { background: var(--agri-green); color: white; box-shadow: 0 4px 12px rgba(21, 128, 61, 0.2); }
+        .btn-outline { background: white; border: 2px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover:not(:disabled) { border-color: var(--agri-red); color: var(--agri-red); }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat-box {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+        }
+        .stat-box strong { display: block; font-size: 28px; font-weight: 900; color: var(--agri-red); line-height: 1.1; }
+        .stat-box span { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .progress-container { margin-top: 16px; height: 10px; background: var(--border-color); border-radius: 99px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--agri-red), var(--agri-gold)); transition: width 0.4s ease; }
+
+        /* Quiz UI */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .question-text {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .question-text .q-num { color: var(--agri-red); font-size: 22px; font-weight: 900; }
+        
+        .options-list { display: flex; flex-direction: column; gap: 12px; }
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        .option-item:hover:not(:disabled) { border-color: var(--agri-red); background: #fff5f6; }
+        .opt-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        
+        /* Quiz States */
+        .option-item.selected { border-color: var(--agri-red); background: #fff5f6; }
+        .option-item.selected .opt-letter { background: var(--agri-red); color: white; }
+        
+        .option-item.correct { border-color: var(--agri-green); background: #f0fdf4; }
+        .option-item.correct .opt-letter { background: var(--agri-green); color: white; }
+        
+        .option-item.wrong { border-color: var(--agri-red-hover); background: #fef2f2; }
+        .option-item.wrong .opt-letter { background: var(--agri-red-hover); color: white; }
+
+        .feedback-box {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            display: none;
+            font-size: 15px;
+        }
+        .feedback-box.show { display: block; }
+        .feedback-box.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .feedback-box.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        .feedback-box b { font-weight: 900; }
+
+        /* Review Item */
+        .review-item {
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-left: 6px solid var(--agri-green);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .review-item.wrong { border-left-color: var(--agri-red); background: #fef2f2; }
+        .review-q { font-weight: 700; margin-bottom: 8px; font-size: 15px; }
+
+        .hidden { display: none !important; }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            background: #fafafa;
+        }
+        .text-green { color: var(--agri-green); font-weight: 700; }
+        .text-red { color: var(--agri-red); font-weight: 700; }
+        .ml-auto { margin-left: auto; }
+
+        /* Footer Style */
+        .footer {
+            text-align: center;
+            padding: 20px 16px;
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer b {
+            color: var(--agri-red);
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .container { margin-top: -20px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .card { padding: 16px; }
+            .btn-group { flex-direction: column; align-items: stretch; }
+            .btn-group .btn, .ml-auto { margin-left: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header-banner">
+    <!-- Banner chính thức mà người dùng đã tải lên (banner2.jpg) -->
+    <img src="banner2.jpg" alt="Banner Chương trình Ôn thi ABIC" id="mainBanner" style="width: 100%; max-width: 1200px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1200&h=350'; this.onerror=null;" />
+</header>
+
+<main class="container">
+    
+    <!-- Cài đặt & Hành động -->
+    <div class="card">
+        <h1 class="card-title">
+            <span>📚 Cài đặt & Khởi tạo Học tập</span>
+        </h1>
+        
+        <div class="quick-guide">
+            <b>Lưu ý:</b> Hệ thống đã nhúng sẵn các câu hỏi mẫu. Để nạp trọn bộ <b>671 câu hỏi</b>, bạn chỉ cần tải file <code>dapan.xlsx</code> vào ô bên dưới <b>(chỉ cần thao tác 1 lần duy nhất)</b>, hệ thống sẽ lưu vĩnh viễn trên trình duyệt của bạn!
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Chế độ học tập</label>
+                <select id="mode" class="form-control">
+                    <option value="practice">📖 Ôn luyện: Hiện đáp án ngay lập tức</option>
+                    <option value="exam">⏱️ Thi thử: Nộp bài mới xem kết quả</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nạp File 671 Câu hỏi (Excel/CSV)</label>
+                <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls,.csv,.htm,.html" style="padding: 9px 16px;" />
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Tra cứu nhanh (Tìm kiếm câu hỏi, đáp án)</label>
+            <input type="text" id="search" class="form-control" placeholder="Nhập từ khóa cần tìm kiếm..." autocomplete="off" />
+        </div>
+        
+        <!-- Các nút hành động chính được gom gọn vào đây -->
+        <div class="btn-group" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button id="startBtn" class="btn btn-primary">▶️ Bắt đầu làm bài</button>
+            <button id="shuffleBtn" class="btn btn-outline">🔀 Làm bài Ngẫu nhiên</button>
+            <button id="clearDataBtn" class="btn btn-outline ml-auto" style="color: var(--agri-red);">🧹 Khôi phục dữ liệu gốc</button>
+        </div>
+    </div>
+
+    <!-- Kết quả tìm kiếm -->
+    <div id="searchResults" class="card hidden">
+        <h2 class="card-title">🔍 Kết quả tra cứu</h2>
+        <div id="searchList"></div>
+    </div>
+
+    <!-- Bảng Thống kê -->
+    <div class="card" id="statsCard">
+        <div class="stats-grid">
+            <div class="stat-box"><strong id="totalStat">0</strong><span>Tổng câu</span></div>
+            <div class="stat-box"><strong id="doneStat" style="color: var(--text-main);">0</strong><span>Đã làm</span></div>
+            <div class="stat-box"><strong id="correctStat" style="color: var(--agri-green);">0</strong><span>Câu đúng</span></div>
+            <div class="stat-box"><strong id="scoreStat" style="color: #2563eb;">0%</strong><span>Tỷ lệ</span></div>
+        </div>
+        <div class="progress-container">
+            <div id="progress" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Khu vực Quiz -->
+    <div id="quizCard" class="card">
+        <div class="empty-state">
+            Hệ thống đã sẵn sàng 100%.<br><br>
+            Hãy bấm <b>Bắt đầu làm bài</b> để ôn luyện toàn bộ kho dữ liệu.
+        </div>
+    </div>
+
+    <!-- Kết quả -->
+    <div id="reviewCard" class="card hidden">
+        <div class="card-title">
+            <span>🏁 Kết quả bài thi chi tiết</span>
+            <span id="reviewBadge" class="badge" style="background: var(--agri-gold-light); color: #92400e; padding: 6px 12px; border-radius: 99px;"></span>
+        </div>
+        <div id="reviewList"></div>
+        <div class="btn-group" style="justify-content: center; margin-top: 20px;">
+            <button id="retryBtn" class="btn btn-primary">🔄 Làm lại từ đầu</button>
+        </div>
+    </div>
+
+</main>
+
+<!-- Bản quyền -->
+<footer class="footer">
+    &copy; Bản quyền thuộc về <b>Trần Xuân Trường</b><br>
+    Phòng Khách hàng Agribank Chi nhánh Lê Lợi Thái Bình
+</footer>
+
+<script>
+'use strict';
+
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+let ALL_QUESTIONS = [];
+let quizQuestions = [];
+let currentIndex = 0;
+let answers = new Map();
+
+// --- HARDCODED MẪU DỮ LIỆU TỪ 671 CÂU HỎI ---
+// Đã chuyển đổi sang cấu trúc phẳng (không còn chương)
+const PRE_IMPORTED_DATA = [
+    { number: 1, question: "Chọn phương án đúng nhất về phương pháp quản lý rủi ro:", options: ["Né tránh rủi ro.", "Chấp nhận rủi ro.", "Kiểm soát rủi ro.", "Chuyển giao rủi ro.", "A, B, C, D đúng."], answer: "A, B, C, D đúng.", explanation: "" },
+    { number: 2, question: "Bảo hiểm là phương thức quản lý rủi ro nào sau đây:", options: ["Né tránh rủi ro.", "Chuyển giao rủi ro.", "Chấp nhận rủi ro.", "Kiểm soát rủi ro."], answer: "Chuyển giao rủi ro.", explanation: "" },
+    { number: 3, question: "Bảo hiểm là phương pháp phòng tránh rủi ro nào sau đây:", options: ["Giữ lại rủi ro.", "Né tránh rủi ro.", "Kiểm soát rủi ro.", "Chuyển giao rủi ro."], answer: "Chuyển giao rủi ro.", explanation: "" },
+    { number: 4, question: "Rủi ro ngẫu nhiên là gì?", options: ["Bất ngờ", "Không lường trước được về không gian, thời gian, cũng như mức độ nghiêm trọng.", "Cả A và B đều đúng"], answer: "Cả A và B đều đúng", explanation: "" },
+    { number: 5, question: "Ông A đầu tư chứng khoán, nếu mã cổ phiếu giảm thì gọi là rủi ro gì?", options: ["Rủi ro có đảm bảo", "Rủi ro Thuần túy", "Rủi ro Đầu cơ", "Rủi ro chung"], answer: "Rủi ro Đầu cơ", explanation: "" },
+    { number: 6, question: "Những tổn thất - hậu quả mà rủi ro sẽ mang lại được tính bằng tiền thì gọi rủi ro:", options: ["Rủi ro tài chính", "Rủi ro phi tài chính", "Rủi ro đầu cơ", "Tất cả các phương án đều đúng"], answer: "Rủi ro tài chính", explanation: "" },
+    { number: 75, question: "Trường hợp nào sau đây không được bảo hiểm theo Nhóm rủi ro B - “Nổ”:", options: ["Nổ nồi hơi mà nguyên nhân là do áp suất tạo ra do hơi nước.", "Bình chứa bị phá huỷ do chất liệu chứa bên trong bình chứa bị nổ.", "Tài sản được bảo hiểm xung quanh bị phá huỷ do nổ bình chứa không phải do áp lực của hơi nước.", "Tài sản được bảo hiểm xung quanh bị phá huỷ do nổ nồi hơi hoặc bình chứa do áp lực hơi nước thuộc quyền sở hữu của người được bảo hiểm."], answer: "Tài sản được bảo hiểm xung quanh bị phá huỷ do nổ bình chứa không phải do áp lực của hơi nước.", explanation: "" },
+    { number: 76, question: "Theo đơn bảo hiểm Hỏa hoạn và các rủi ro đặc biệt của Hiệp hội bảo hiểm Vương quốc Anh, phương án nào sau đây đúng (D):", options: ["Người được bảo hiểm nhất thiết phải tham gia bảo hiểm rủi ro A (hỏa hoạn), các rủi ro phụ từ B (nổ) đến J (đâm va do xe cơ giới) là rủi ro lựa chọn.", "Khi bảo hiểm rủi ro E (hành động ác ý) theo rủi ro A (hỏa hoạn) nhất thiết phải có bảo hiểm rủi ro D (Gây rối, đình công, bế xưởng).", "Khi bảo hiểm rủi ro E (hành động ác ý) theo rủi ro A (hỏa hoạn) không nhất thiết phải có bảo hiểm rủi ro D (Gây rối, đình công, bế xưởng).", "A và B đúng"], answer: "A và B đúng", explanation: "" }
+];
+
+const $ = (id) => document.getElementById(id);
+const els = {
+    mode: $('mode'), search: $('search'), fileInput: $('fileInput'),
+    clearDataBtn: $('clearDataBtn'),
+    startBtn: $('startBtn'), shuffleBtn: $('shuffleBtn'), retryBtn: $('retryBtn'),
+    totalStat: $('totalStat'), doneStat: $('doneStat'), correctStat: $('correctStat'), scoreStat: $('scoreStat'), progress: $('progress'),
+    quizCard: $('quizCard'), reviewCard: $('reviewCard'), reviewList: $('reviewList'), 
+    searchResults: $('searchResults'), searchList: $('searchList')
+};
+
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));
+}
+
+function normalizeText(str) {
+    return String(str ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function parseOptionLine(text) {
+    const raw = normalizeText(String(text ?? '').replace(/\u00a0/g, ' ')).replace(/^["']/, '');
+    const match = raw.match(/^\s*([A-ZĐ])\s*[\.\)\-:\/]\s*(.+)$/i);
+    if (!match) return null;
+    const letter = match[1].toUpperCase();
+    if (letter === 'Đ') return null;
+    return { letter, text: normalizeText(match[2]).replace(/["']$/, '') };
+}
+
+function stripQuestionNumber(text) {
+    return normalizeText(text).replace(/^\s*\d+[\).\-:]\s*/, '').trim();
+}
+
+// Thuật toán parse file thông minh tương thích 100% với dapan.xlsx
+function parseRowsToQuestions(rows) {
+    const questions = [];
+    let current = null;
+
+    function pushCurrent() {
+        if (current && current.question && current.options.length) {
+            questions.push(finalizeQuestion(current));
+        }
+    }
+
+    rows.forEach((row) => {
+        const cleanRow = row.filter(cell => cell !== undefined && cell !== null && String(cell).trim() !== '');
+        if (cleanRow.length === 0) return;
+
+        let colA = normalizeText(cleanRow[0]);
+        let colB = cleanRow.length > 1 ? normalizeText(cleanRow[1]) : '';
+        let colC = cleanRow.length > 2 ? normalizeText(cleanRow[2]) : '';
+
+        const colAIsNumber = /^\d+$/.test(colA);
+        const colAHasQuestionNumber = /^\d+[\).\-:]\s*/.test(colA);
+        const sourceText = colAIsNumber ? colB : colA;
+        
+        if (!sourceText && !colC) return;
+
+        if ((colAIsNumber && colB) || colAHasQuestionNumber || /^\d+[\).\-:]\s+/.test(sourceText)) {
+            pushCurrent();
+            const number = colAIsNumber ? Number(colA) : Number((sourceText.match(/^\s*(\d+)/) || [])[1]) || questions.length + 1;
+            const questionText = colAIsNumber ? colB : stripQuestionNumber(sourceText);
+            current = {
+                number,
+                question: normalizeText(questionText),
+                options: [],
+                answerRaw: colC || (cleanRow.length > 1 && !colAIsNumber ? cleanRow[1] : ''),
+                explanation: ''
+            };
+            return;
+        }
+
+        const option = parseOptionLine(sourceText);
+        if (option && current) {
+            current.options.push(option.text);
+            return;
+        }
+
+        if (current && sourceText && !option) {
+            if (/^giải thích|^gợi ý|^ghi chú/i.test(sourceText)) current.explanation += (current.explanation ? ' ' : '') + sourceText;
+            else current.question += ' ' + sourceText;
+        }
+    });
+
+    pushCurrent();
+    return questions.filter(q => q.question && q.options.length >= 2 && q.answer);
+}
+
+function finalizeQuestion(q) {
+    const answerRaw = normalizeText(q.answerRaw);
+    let answer = '';
+
+    const letterMatch = answerRaw.match(/^([A-Z])\s*[\.\)]?$/i) || answerRaw.match(/^([A-Z])\s*[\.\)]\s*/i);
+    if (letterMatch) {
+        const idx = LETTERS.indexOf(letterMatch[1].toUpperCase());
+        answer = q.options[idx] || '';
+    }
+
+    if (!answer && answerRaw) {
+        answer = q.options.find(opt => normalizeText(opt).toLowerCase() === answerRaw.toLowerCase()) ||
+                 q.options.find(opt => normalizeText(opt).toLowerCase().includes(answerRaw.toLowerCase())) ||
+                 answerRaw;
+    }
+
+    if (!answer && q.options.length) answer = q.options[0];
+
+    return {
+        number: q.number,
+        question: normalizeText(q.question),
+        options: q.options.map(normalizeText),
+        answer,
+        explanation: q.explanation || ''
+    };
+}
+
+async function parseExcelFile(file) {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array', cellStyles: true });
+    let allQs = [];
+
+    workbook.SheetNames.forEach(sheetName => {
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+        const qs = parseRowsToQuestions(rows);
+        allQs = allQs.concat(qs);
+    });
+    return allQs;
+}
+
+// Cập nhật trạng thái thống kê
+function updateStats() {
+    // Nếu chưa vào quiz, hiển thị tổng số câu hiện có trong thư viện
+    const total = quizQuestions.length > 0 ? quizQuestions.length : ALL_QUESTIONS.length;
+    const done = answers.size;
+    const correct = quizQuestions.filter((q, idx) => answers.get(idx) === q.answer).length;
+    const score = done ? Math.round((correct / done) * 100) : 0;
+    
+    els.totalStat.textContent = total;
+    els.doneStat.textContent = done;
+    els.correctStat.textContent = correct;
+    els.scoreStat.textContent = `${score}%`;
+    els.progress.style.width = total ? `${Math.round((done / total) * 100)}%` : '0%';
+}
+
+function startQuiz(shuffle = false) {
+    if (!ALL_QUESTIONS.length) {
+        alert("Kho dữ liệu trống! Vui lòng tải file Excel/CSV chứa dữ liệu ôn thi trước.");
+        return;
+    }
+    
+    quizQuestions = shuffle ? [...ALL_QUESTIONS].sort(() => Math.random() - 0.5) : [...ALL_QUESTIONS];
+    currentIndex = 0;
+    answers.clear();
+    
+    els.reviewCard.classList.add('hidden');
+    els.searchResults.classList.add('hidden');
+    els.quizCard.style.display = 'block';
+    
+    renderQuiz();
+    els.quizCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Render UI Trắc nghiệm
+function renderQuiz() {
+    if (!quizQuestions.length) return;
+
+    const q = quizQuestions[currentIndex];
+    const selectedAns = answers.get(currentIndex);
+    const isPractice = els.mode.value === 'practice';
+    const answered = selectedAns !== undefined;
+    
+    let optionsHtml = q.options.map((opt, idx) => {
+        const letter = LETTERS[idx] || String(idx + 1);
+        let cls = '';
+        if (answered) {
+            if (isPractice && opt === q.answer) cls = 'correct';
+            if (isPractice && selectedAns === opt && selectedAns !== q.answer) cls = 'wrong';
+            if (!isPractice && selectedAns === opt) cls = 'selected';
+        }
+        return `
+            <div class="option-item ${cls}" onclick="chooseAnswer(${idx})">
+                <div class="opt-letter">${letter}</div>
+                <div>${escapeHtml(opt)}</div>
+            </div>
+        `;
+    }).join('');
+
+    let feedbackHtml = '';
+    if (answered && isPractice) {
+        const isCorrect = selectedAns === q.answer;
+        feedbackHtml = `
+            <div class="feedback-box show ${isCorrect ? 'ok' : 'err'}">
+                <b>${isCorrect ? '✅ Chính xác!' : '❌ Rất tiếc, chưa đúng!'}</b><br>
+                Đáp án đúng là: <b>${escapeHtml(q.answer)}</b>
+                ${q.explanation ? `<div style="margin-top: 6px; font-size: 13px; color: var(--text-muted);">${escapeHtml(q.explanation)}</div>` : ''}
+            </div>
+        `;
+    }
+
+    els.quizCard.innerHTML = `
+        <div class="quiz-header">
+            <span class="badge" style="background: var(--agri-red); color: white; padding: 6px 12px; border-radius: 99px; font-weight: 700;">
+                Câu ${currentIndex + 1} / ${quizQuestions.length}
+            </span>
+            <span class="badge" style="background: var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 99px; font-weight: 700;">
+                ${isPractice ? '📖 Ôn luyện' : '⏱️ Thi thử'}
+            </span>
+        </div>
+        
+        <div class="question-text">
+            <span class="q-num">${q.number}.</span> ${escapeHtml(q.question)}
+        </div>
+        
+        <div class="options-list">
+            ${optionsHtml}
+        </div>
+        
+        ${feedbackHtml}
+        
+        <div class="btn-group" style="justify-content: space-between; margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="btn btn-outline" onclick="prevQuestion()" ${currentIndex === 0 ? 'disabled' : ''}>← Câu trước</button>
+            ${currentIndex === quizQuestions.length - 1 && els.mode.value === 'exam' 
+                ? `<button class="btn btn-success" onclick="finishExam()">✅ Nộp bài xem kết quả</button>`
+                : `<button class="btn btn-primary" onclick="nextQuestion()">${currentIndex === quizQuestions.length - 1 ? 'Hoàn thành' : 'Câu tiếp theo →'}</button>`
+            }
+        </div>
+    `;
+    updateStats();
+}
+
+function chooseAnswer(optIdx) {
+    if (!quizQuestions.length) return;
+    const q = quizQuestions[currentIndex];
+    answers.set(currentIndex, q.options[optIdx]);
+    renderQuiz();
+}
+
+function prevQuestion() { if (currentIndex > 0) { currentIndex--; renderQuiz(); } }
+function nextQuestion() { 
+    if (currentIndex < quizQuestions.length - 1) { 
+        currentIndex++; renderQuiz(); 
+    } 
+}
+
+function finishExam() {
+    if (!quizQuestions.length) return;
+    
+    const total = quizQuestions.length;
+    const correct = quizQuestions.filter((q, idx) => answers.get(idx) === q.answer).length;
+    const score = Math.round((correct / total) * 100);
+    
+    els.reviewBadge.textContent = `${correct}/${total} câu • Điểm: ${score}%`;
+    
+    els.reviewList.innerHTML = quizQuestions.map((q, idx) => {
+        const chosen = answers.get(idx);
+        const ok = chosen === q.answer;
+        return `
+            <div class="review-item ${!ok ? 'wrong' : ''}">
+                <div class="review-q">Câu ${q.number}: ${escapeHtml(q.question)}</div>
+                <div>
+                    Bạn chọn: <b class="${ok ? 'text-green' : 'text-red'}">${escapeHtml(chosen || '(Chưa chọn)')}</b>
+                </div>
+                ${!ok ? `<div style="margin-top: 4px;">Đáp án đúng: <b class="text-green">${escapeHtml(q.answer)}</b></div>` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    els.quizCard.innerHTML = '<div class="empty-state">Đã nộp bài. Vui lòng xem kết quả chi tiết bên dưới.</div>';
+    els.reviewCard.classList.remove('hidden');
+    els.reviewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateStats();
+}
+
+// Tìm kiếm thông minh (Quét toàn bộ kho ALL_QUESTIONS)
+els.search.addEventListener('input', (e) => {
+    const kw = normalizeText(e.target.value).toLowerCase();
+    if (!kw || kw.length < 2) {
+        els.searchResults.classList.add('hidden');
+        return;
+    }
+    
+    const results = ALL_QUESTIONS.filter(q => {
+        const haystack = [q.question, ...q.options, q.answer].join(' ').toLowerCase();
+        return haystack.includes(kw);
+    });
+    
+    els.searchResults.classList.remove('hidden');
+    if (results.length === 0) {
+        els.searchList.innerHTML = '<div class="empty-state">Không tìm thấy nội dung phù hợp.</div>';
+    } else {
+        els.searchList.innerHTML = results.slice(0, 15).map((q, i) => `
+            <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; background: #fff;">
+                <div style="font-weight: 700; color: var(--agri-red); margin-bottom: 4px;">${q.number}. ${escapeHtml(q.question)}</div>
+                <div>Đáp án: <b class="text-green">${escapeHtml(q.answer)}</b></div>
+            </div>
+        `).join('');
+    }
+});
+
+// Nạp File Excel (Upload dapan.xlsx)
+els.fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const labelOriginal = els.fileInput.previousElementSibling.innerText;
+    els.fileInput.previousElementSibling.innerText = '⏳ Đang phân tích file câu hỏi...';
+    
+    try {
+        const questions = await parseExcelFile(file);
+        if (!questions.length) {
+            alert('Lỗi định dạng: Không tìm thấy câu hỏi trong file.');
+            return;
+        }
+        
+        ALL_QUESTIONS = questions;
+        localStorage.setItem('abic_questions', JSON.stringify(ALL_QUESTIONS));
+        updateStats();
+        alert(`Hoàn tất! Đã nạp thành công trọn bộ ${questions.length} câu hỏi vào hệ thống!`);
+        
+        // Tự động khởi chạy luôn sau khi nạp file
+        startQuiz();
+    } catch (err) {
+        alert('Không thể đọc file. Vui lòng kiểm tra lại định dạng!');
+    } finally {
+        els.fileInput.previousElementSibling.innerText = labelOriginal;
+        els.fileInput.value = ''; 
+    }
+});
+
+// Khôi phục bộ dữ liệu mặc định
+els.clearDataBtn.addEventListener('click', () => {
+    if (!confirm('Bạn có chắc muốn xóa dữ liệu đã tải lên và khôi phục về các câu hỏi mẫu?')) return;
+    
+    localStorage.removeItem('abic_questions');
+    ALL_QUESTIONS = [...PRE_IMPORTED_DATA]; // Khôi phục lại bản hardcode
+    quizQuestions = [];
+    answers.clear();
+    
+    els.quizCard.innerHTML = '<div class="empty-state">Hệ thống đã khôi phục dữ liệu mẫu ban đầu.<br><br>Hãy bấm <b>Bắt đầu làm bài</b> để ôn luyện.</div>';
+    els.reviewCard.classList.add('hidden');
+    updateStats();
+});
+
+// Gán Event Listener
+els.startBtn.addEventListener('click', () => startQuiz(false));
+els.shuffleBtn.addEventListener('click', () => startQuiz(true));
+els.retryBtn.addEventListener('click', () => startQuiz(false));
+els.mode.addEventListener('change', () => { if (quizQuestions.length > 0) renderQuiz(); });
+
+// Global (For HTML onclick handlers)
+window.chooseAnswer = chooseAnswer;
+window.prevQuestion = prevQuestion;
+window.nextQuestion = nextQuestion;
+window.finishExam = finishExam;
+
+// Khởi tạo
+function initApp() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('abic_questions') || '[]');
+        if (Array.isArray(saved) && saved.length > 0) {
+            ALL_QUESTIONS = saved; 
+        } else {
+            ALL_QUESTIONS = [...PRE_IMPORTED_DATA];
+        }
+    } catch (e) {
+        ALL_QUESTIONS = [...PRE_IMPORTED_DATA];
+    }
+    updateStats();
+}
+
+initApp();
+
+</script>
+</body>
+</html>

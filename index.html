@@ -44,11 +44,13 @@
             background: var(--agri-red-dark);
             border-bottom: 4px solid var(--agri-gold);
             text-align: center;
+            overflow: hidden; /* Ngăn hình ảnh tràn viền */
         }
         .header-banner img {
             width: 100%;
-            max-width: 1200px;
-            height: auto;
+            max-width: 100%; /* Cho phép banner mở rộng tối đa màn hình */
+            height: auto; /* Tự động tính toán chiều cao chuẩn theo tỷ lệ ảnh */
+            object-fit: contain; /* Đảm bảo hiển thị đầy đủ 100% nội dung ảnh, không bị cắt xén */
             display: block;
             margin: 0 auto;
         }
@@ -56,7 +58,7 @@
         /* Container Layout */
         .container {
             max-width: 960px;
-            margin: -30px auto 0;
+            margin: 24px auto 0; /* Sửa margin-top từ -30px thành 24px để không đè lên banner */
             padding: 0 16px;
             position: relative;
             z-index: 10;
@@ -278,7 +280,7 @@
         }
 
         @media (max-width: 768px) {
-            .container { margin-top: -20px; }
+            .container { margin-top: 16px; } /* Sửa margin-top từ -20px thành 16px cho điện thoại */
             .grid-2 { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .card { padding: 16px; }
@@ -324,7 +326,7 @@
         <div class="btn-group" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
             <button id="startBtn" class="btn btn-primary">▶️ Bắt đầu làm bài</button>
             <button id="shuffleBtn" class="btn btn-outline">🔀 Làm bài Ngẫu nhiên</button>
-            <button id="clearDataBtn" class="btn btn-outline ml-auto" style="color: var(--agri-red);">🧹 Khôi phục dữ liệu gốc</button>
+            <button id="clearDataBtn" class="btn btn-outline ml-auto" style="color: var(--agri-red);">🧹 Xóa dữ liệu</button>
         </div>
     </div>
 
@@ -351,7 +353,7 @@
     <div id="quizCard" class="card">
         <div class="empty-state">
             Hệ thống đã sẵn sàng 100%.<br><br>
-            Hãy bấm <b>Bắt đầu làm bài</b> để ôn luyện toàn bộ kho dữ liệu.
+            Hãy nạp file câu hỏi và bấm <b>Bắt đầu làm bài</b> để ôn luyện.
         </div>
     </div>
 
@@ -384,17 +386,8 @@ let quizQuestions = [];
 let currentIndex = 0;
 let answers = new Map();
 
-// --- HARDCODED MẪU DỮ LIỆU ---
-const PRE_IMPORTED_DATA = [
-    { number: 1, question: "Chọn phương án đúng nhất về phương pháp quản lý rủi ro:", options: ["Né tránh rủi ro.", "Chấp nhận rủi ro.", "Kiểm soát rủi ro.", "Chuyển giao rủi ro.", "A, B, C, D đúng."], answer: "A, B, C, D đúng.", explanation: "" },
-    { number: 2, question: "Bảo hiểm là phương thức quản lý rủi ro nào sau đây:", options: ["Né tránh rủi ro.", "Chuyển giao rủi ro.", "Chấp nhận rủi ro.", "Kiểm soát rủi ro."], answer: "Chuyển giao rủi ro.", explanation: "" },
-    { number: 3, question: "Bảo hiểm là phương pháp phòng tránh rủi ro nào sau đây:", options: ["Giữ lại rủi ro.", "Né tránh rủi ro.", "Kiểm soát rủi ro.", "Chuyển giao rủi ro."], answer: "Chuyển giao rủi ro.", explanation: "" },
-    { number: 4, question: "Rủi ro ngẫu nhiên là gì?", options: ["Bất ngờ", "Không lường trước được về không gian, thời gian, cũng như mức độ nghiêm trọng.", "Cả A và B đều đúng"], answer: "Cả A và B đều đúng", explanation: "" },
-    { number: 5, question: "Ông A đầu tư chứng khoán, nếu mã cổ phiếu giảm thì gọi là rủi ro gì?", options: ["Rủi ro có đảm bảo", "Rủi ro Thuần túy", "Rủi ro Đầu cơ", "Rủi ro chung"], answer: "Rủi ro Đầu cơ", explanation: "" },
-    { number: 6, question: "Những tổn thất - hậu quả mà rủi ro sẽ mang lại được tính bằng tiền thì gọi rủi ro:", options: ["Rủi ro tài chính", "Rủi ro phi tài chính", "Rủi ro đầu cơ", "Tất cả các phương án đều đúng"], answer: "Rủi ro tài chính", explanation: "" },
-    { number: 75, question: "Trường hợp nào sau đây không được bảo hiểm theo Nhóm rủi ro B - “Nổ”:", options: ["Nổ nồi hơi mà nguyên nhân là do áp suất tạo ra do hơi nước.", "Bình chứa bị phá huỷ do chất liệu chứa bên trong bình chứa bị nổ.", "Tài sản được bảo hiểm xung quanh bị phá huỷ do nổ bình chứa không phải do áp lực của hơi nước.", "Tài sản được bảo hiểm xung quanh bị phá huỷ do nổ nồi hơi hoặc bình chứa do áp lực hơi nước thuộc quyền sở hữu của người được bảo hiểm."], answer: "Tài sản được bảo hiểm xung quanh bị phá huỷ do nổ bình chứa không phải do áp lực của hơi nước.", explanation: "" },
-    { number: 76, question: "Theo đơn bảo hiểm Hỏa hoạn và các rủi ro đặc biệt của Hiệp hội bảo hiểm Vương quốc Anh, phương án nào sau đây đúng (D):", options: ["Người được bảo hiểm nhất thiết phải tham gia bảo hiểm rủi ro A (hỏa hoạn), các rủi ro phụ từ B (nổ) đến J (đâm va do xe cơ giới) là rủi ro lựa chọn.", "Khi bảo hiểm rủi ro E (hành động ác ý) theo rủi ro A (hỏa hoạn) nhất thiết phải có bảo hiểm rủi ro D (Gây rối, đình công, bế xưởng).", "Khi bảo hiểm rủi ro E (hành động ác ý) theo rủi ro A (hỏa hoạn) không nhất thiết phải có bảo hiểm rủi ro D (Gây rối, đình công, bế xưởng).", "A và B đúng"], answer: "A và B đúng", explanation: "" }
-];
+// --- DỮ LIỆU SẠCH TRỐNG ---
+const PRE_IMPORTED_DATA = [];
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -747,14 +740,14 @@ els.fileInput.addEventListener('change', async (e) => {
 });
 
 els.clearDataBtn.addEventListener('click', () => {
-    if (!confirm('Bạn có chắc muốn xóa dữ liệu đã tải lên và khôi phục về các câu hỏi mẫu?')) return;
+    if (!confirm('Bạn có chắc muốn xóa toàn bộ dữ liệu đã tải lên?')) return;
     
     localStorage.removeItem('abic_questions');
-    ALL_QUESTIONS = [...PRE_IMPORTED_DATA];
+    ALL_QUESTIONS = [];
     quizQuestions = [];
     answers.clear();
     
-    els.quizCard.innerHTML = '<div class="empty-state">Hệ thống đã khôi phục dữ liệu mẫu ban đầu.<br><br>Hãy bấm <b>Bắt đầu làm bài</b> để ôn luyện.</div>';
+    els.quizCard.innerHTML = '<div class="empty-state">Hệ thống đã xóa dữ liệu.<br><br>Hãy nạp file câu hỏi để tiếp tục ôn luyện.</div>';
     els.reviewCard.classList.add('hidden');
     updateStats();
 });
